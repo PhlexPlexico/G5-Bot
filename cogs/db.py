@@ -1,12 +1,25 @@
 import peewee as pw
-import configparser
+import cogs.utils.configloader as config
+import random
+import string
 
-config = configparser.ConfigParser()
-config.read('settings.ini')
+databaseValues = config.getDatabaseValues()
+discordValues = config.getDiscordValues()
+db = pw.MySQLDatabase(database=databaseValues['dbname'], host=databaseValues['host'], port=int(
+    databaseValues['port']), user=databaseValues['user'], passwd=databaseValues['password'])
 
-db = pw.MySQLDatabase(database=config['DATABASE']['dbname'], host=config['DATABASE']['host'], port=int(
-    config['DATABASE']['port']), user=config['DATABASE']['user'], passwd=config['DATABASE']['password'])
 
+def create_match(user_id, server_id, veto_first):
+    api_key = ''.join(random.SystemRandom().choice(
+        string.ascii_uppercase + string.digits) for _ in range(24))
+    match = Match.create(user_id=user_id, server_id=server_id, team1_id=int(databaseValues['team1ScrimID']), team2_id=int(
+        databaseValues['team2ScrimID']), skip_veto=True, api_key=api_key, veto_mappool=discordValues['vetoMapPool'], season_id=int(databaseValues['seasonID']), veto_first='team1', enforce_teams=False)
+    match.save()
+    return match
+
+def get_available_public_servers():
+    servers =  Server.select().where((Server.public_server==1) & (Server.in_use==0))
+    return servers
 
 class BaseModel(pw.Model):
     """A base model that will use our MySQL database"""
@@ -49,9 +62,9 @@ class Match(BaseModel):
     user_id = pw.IntegerField(default=1, index=True)
     server_id = pw.ForeignKeyField(Server, backref='id', index=True)
     team1_id = pw.IntegerField(
-        default=config['DISCORD']['team1ScrimID'], index=True)
+        default=databaseValues['team1ScrimID'], index=True)
     team2_id = pw.IntegerField(
-        default=config['DISCORD']['team2ScrimID'], index=True)
+        default=databaseValues['team2ScrimID'], index=True)
     title = pw.CharField(max_length=60, default='Map {MAPNUMBER} of {MAXMAPS}')
     skip_veto = pw.BooleanField(default=True)
     api_key = pw.CharField(max_length=32)

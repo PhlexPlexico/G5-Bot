@@ -16,16 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import configparser
+import cogs.utils.configloader as config
 import discord
 from discord.ext import commands
 
-config = configparser.ConfigParser()
-config.read('settings.ini')
+databaseValues = config.getDatabaseValues()
+discordValues = config.getDiscordValues()
+
 initial_extensions = ['cogs.readysystem']
 
 bot = commands.Bot(
-    command_prefix=config['DISCORD']['prefix'], description=config['DISCORD']['description'])
+    command_prefix=discordValues['prefix'], description=discordValues['description'])
 
 # Here we load our extensions(cogs) listed above in [initial_extensions].
 if __name__ == '__main__':
@@ -39,9 +40,9 @@ async def on_ready():
     print('------')
     print('Logged in as {} with id {}'.format(bot.user.name, bot.user.id))
     print('VC1 Name is {}\nVC2 Name is {}'.format(
-        bot.get_channel(int(config['DISCORD']['team1VoiceChannelID'])),
-        bot.get_channel(int(config['DISCORD']['team2VoiceChannelID']))))
+        bot.get_channel(int(discordValues['team1VoiceChannelID'])),
+        bot.get_channel(int(discordValues['team2VoiceChannelID']))))
     print('------')
     # loop over all the servers the bots apart
 
-bot.run(str(config['DISCORD']['discordToken']))
+bot.run(discordValues['discordToken'])
