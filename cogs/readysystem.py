@@ -29,24 +29,6 @@ class ReadySystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def doneSelection():
-        global inProgress
-        global readyUsers
-        global firstCaptain
-        global secondCaptain
-        global teamOne
-        global teamTwo
-        global pickNum
-
-        inProgress = False
-        readyUsers = []
-        teamOne = []
-        teamTwo = []
-        firstCaptain = None
-        secondCaptain = None
-        pickNum = 1
-        return
-
     @commands.command(aliases=['gaben'])
     async def ready(self, ctx):
         # we received a message
@@ -121,7 +103,13 @@ class ReadySystem(commands.Cog):
         if(ctx.message.channel.id != int(config['DISCORD']['setupTextChannelID'])):
             # if they aren't using an appropriate channel, return
             return
+        if(inProgress):
+
         author = ctx.author
+        embed = discord.Embed(description=author.mention +
+                                  " You dare leave during the team selection? How dare you.", color=0x3f0fc)
+            await ctx.send(embed=embed)
+            return
         try:
             readyUsers.remove(author)
             # unready message
@@ -141,7 +129,21 @@ class ReadySystem(commands.Cog):
         if(ctx.message.channel.id != int(config['DISCORD']['setupTextChannelID'])):
             # if they aren't using an appropriate channel, return
             return
-        doneSelection()
+        global inProgress
+        global readyUsers
+        global firstCaptain
+        global secondCaptain
+        global teamOne
+        global teamTwo
+        global pickNum
+
+        inProgress = False
+        readyUsers = []
+        teamOne = []
+        teamTwo = []
+        firstCaptain = None
+        secondCaptain = None
+        pickNum = 1
         embed = discord.Embed(
             description="**Current 10man finished, need** 10 **readied players**", color=0xff0000)
         await ctx.send(embed=embed)
@@ -165,7 +167,7 @@ class ReadySystem(commands.Cog):
         return
 
     @commands.command()
-    async def pick(ctx):
+    async def pick(self,ctx):
         global inProgress
         global readyUsers
         global firstCaptain
@@ -219,7 +221,13 @@ class ReadySystem(commands.Cog):
                     await ctx.send(embed=embed)
                     await firstCaptain.move_to(team1VoiceChannel)
                     await secondCaptain.move_to(team2VoiceChannel)
-                    doneSelection()
+                    inProgress = False
+                    readyUsers = []
+                    teamOne = []
+                    teamTwo = []
+                    firstCaptain = None
+                    secondCaptain = None
+                    pickNum = 1
                     return
                 # check if we need to pick again or its other captains turn
                 if (pickNum == 2 or pickNum == 3 or pickNum == 5 or pickNum == 7):
