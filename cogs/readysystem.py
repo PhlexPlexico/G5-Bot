@@ -71,13 +71,13 @@ class ReadySystem(commands.Cog):
         # ready command
         if (inProgress == False and len(readyUsers) < 10):
             # check if they are already ready
-            if(author in readyUsers):
-                embed = discord.Embed(
-                    description=author.mention + "You're already ready, chill.", color=0x03f0fc)
-                await ctx.send(embed=embed)
-                return
+            #if(author in readyUsers):
+            #    embed = discord.Embed(
+            #        description=author.mention + "You're already ready, chill.", color=0x03f0fc)
+            #    await ctx.send(embed=embed)
+            #    return
             # actually readying up
-            else:
+            #else:
                 # add them to the ready list and send a message
                 readyUsers.append(author)
                 # TODO: CREATE MATCH ON USERS READY.
@@ -148,7 +148,7 @@ class ReadySystem(commands.Cog):
         return
 
     @commands.command()
-    async def whosready(ctx):
+    async def whosready(self, ctx):
         global readyUsers
         # make sure they're using the bot setup channel
         if(ctx.message.channel.id != int(config['DISCORD']['setupTextChannelID'])):
