@@ -104,12 +104,12 @@ class ReadySystem(commands.Cog):
             # if they aren't using an appropriate channel, return
             return
         if(inProgress):
-
-        author = ctx.author
-        embed = discord.Embed(description=author.mention +
+            embed = discord.Embed(description=author.mention +
                                   " You dare leave during the team selection? How dare you.", color=0x3f0fc)
             await ctx.send(embed=embed)
             return
+        author = ctx.author
+        
         try:
             readyUsers.remove(author)
             # unready message
