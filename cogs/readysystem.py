@@ -2,6 +2,7 @@ import asyncio
 import discord
 import cogs.utils.configloader as configloader
 import random
+import cogs.vetosystem as vetosystem
 from discord.ext import commands
 from discord.ext.commands import bot
 import os
@@ -27,11 +28,8 @@ currentPickingCaptain = ""
 pickNum = 1
 team1VoiceChannel = None
 team2VoiceChannel = None
-
 class ReadySystem(commands.Cog):
     def __init__(self, bot):
-        global team1VoiceChannel
-        global team2VoiceChannel
         self.bot = bot
 
     @commands.command(aliases=['gaben'])
@@ -56,7 +54,7 @@ class ReadySystem(commands.Cog):
             return
 
         # ready command
-        if (inProgress == False and len(readyUsers) < 10):
+        if (not inProgress and len(readyUsers) < 10):
             # check if they are already ready. If debug, then we can allow users to join multiple times.
             if(author in readyUsers and __debug__):
                embed = discord.Embed(
@@ -180,7 +178,7 @@ class ReadySystem(commands.Cog):
         global pickNum
         global team1VoiceChannel
         global team2VoiceChannel
-
+        global match 
         # Get the voice channels.
         if team1VoiceChannel is None:
             team1VoiceChannel = ctx.bot.get_channel(int(discordConfig['team1VoiceChannelID']))
@@ -190,7 +188,7 @@ class ReadySystem(commands.Cog):
         if(ctx.message.channel.id != int(discordConfig['setupTextChannelID'])):
             # if they aren't using an appropriate channel, return
             return
-        if (inProgress == True and pickNum < 9):
+        if (inProgress and pickNum < 9):
             author = ctx.author
             message = ctx.message
             # make sure a captain is picking, and its his turn
@@ -228,19 +226,29 @@ class ReadySystem(commands.Cog):
                 # check if we're done picking
                 if(pickNum == 9):
                     embed = discord.Embed(description='''The teams are now made and bot setup is finished.\n
-                    Team 1: ''' + ", ".join(str(x.name) for x in teamOne) + '''
+                    Team {}: '''.format(firstCaptain.name) + ", ".join(str(x.name) for x in teamOne) + '''
                     
-                    Team 2: ''' + ", ".join(str(x.name) for x in teamTwo) + '''
-                    **Good luck and have fun!**''', color=0x3f0fc)
+                    Team {}: '''.format(secondCaptain.name) + ", ".join(str(x.name) for x in teamTwo) + '''
+                    ***Now onto vetoes!***''' + '''
+                    For vetoes, please use `!veto map_name` to strike a map. Last map will be the decider.\n\n
+                    Our current maps are: ''' + discordConfig['vetoMapPool'], color=0x3f0fc)
                     await ctx.send(embed=embed)
                     await firstCaptain.move_to(team1VoiceChannel)
                     await secondCaptain.move_to(team2VoiceChannel)
+                    # Randomly select who vetoes first.
+                    vetosystem.currentVeto = 'team1' if random.getrandbits(1) else 'team2'
+                    curLocalVeto = vetosystem.currentVeto
                     if databasePresent:
-                        match = db.create_match(databaseConfig['userID'], databaseConfig['serverID'], "team1")
+                        vetosystem.match = db.create_match(databaseConfig['userID'], databaseConfig['serverID'], curLocalVeto)
                     inProgress = False
                     readyUsers = []
                     teamOne = []
                     teamTwo = []
+                    # Passing the buck.
+                    vetosystem.firstCaptain = firstCaptain
+                    vetosystem.secondCaptain = secondCaptain
+                    vetosystem.inProgress = True
+
                     firstCaptain = None
                     secondCaptain = None
                     pickNum = 1

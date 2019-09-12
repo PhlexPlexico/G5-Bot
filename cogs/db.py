@@ -16,9 +16,24 @@ def create_match(user_id, server_id, veto_first):
     api_key = ''.join(random.SystemRandom().choice(
         string.ascii_uppercase + string.digits) for _ in range(24))
     match = Match.create(user_id=user_id, server_id=server_id, team1_id=int(databaseValues['team1ScrimID']), team2_id=int(
-        databaseValues['team2ScrimID']), skip_veto=True, api_key=api_key, veto_mappool=discordValues['vetoMapPool'], season_id=int(databaseValues['seasonID']), veto_first='team1', enforce_teams=False)
+        databaseValues['team2ScrimID']), skip_veto=True, api_key=api_key, veto_mappool=discordValues['vetoMapPool'], season_id=int(databaseValues['seasonID']), veto_first=veto_first, enforce_teams=False)
     match.save()
     return match
+
+def create_veto(match_id, team_name, mapName, pick_or_veto):
+    veto = Veto.create(match_id=match_id, team_name=team_name, map=mapName, pick_or_veto=pick_or_veto)
+    veto.save()
+    return veto
+
+def update_match_first_veto(match_id, firstVeto):
+    match = Match.select().where(Match.id==match_id).get()
+    match.veto_first = firstVeto
+    match.save()
+
+def update_match_maps(match_id, mappool):
+    match = Match.select().where(Match.id==match_id).get()
+    match.veto_mappool = mappool
+    match.save()
 
 def get_available_public_servers():
     servers =  Server.select().where((Server.public_server==1) & (Server.in_use==0))
@@ -76,5 +91,12 @@ class Match(BaseModel):
     veto_first = pw.CharField(default=5)
     enforce_teams = pw.BooleanField(default=False)
 
+
+class Veto(BaseModel):
+    id = pw.AutoField()
+    match_id = pw.IntegerField()
+    team_name = pw.CharField(max_length=64)
+    map = pw.CharField(max_length=32)
+    pick_or_veto = pw.CharField(max_length=4)
 
 db.connect()

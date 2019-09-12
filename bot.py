@@ -23,7 +23,7 @@ from discord.ext import commands
 databaseValues = config.getDatabaseValues()
 discordValues = config.getDiscordValues()
 
-initial_extensions = ['cogs.readysystem']
+initial_extensions = ['cogs.readysystem', 'cogs.vetosystem']
 
 bot = commands.Bot(
     command_prefix=discordValues['prefix'], description=discordValues['description'])
