@@ -5,8 +5,11 @@ import string
 
 databaseValues = config.getDatabaseValues()
 discordValues = config.getDiscordValues()
-db = pw.MySQLDatabase(database=databaseValues['dbname'], host=databaseValues['host'], port=int(
-    databaseValues['port']), user=databaseValues['user'], passwd=databaseValues['password'])
+try:
+    db = pw.MySQLDatabase(database=databaseValues['dbname'], host=databaseValues['host'], port=int(
+        databaseValues['port']), user=databaseValues['user'], passwd=databaseValues['password'])
+except:
+    raise ImportError("Database is not instantiated!")
 
 
 def create_match(user_id, server_id, veto_first):

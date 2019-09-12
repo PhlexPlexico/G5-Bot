@@ -8,9 +8,14 @@ import os
 # Import our database, if we have none we can still use this bot without DB functionality!
 try:
     import cogs.db as db
+    databasePresent=True
 except ImportError:
     databasePresent = False
 discordConfig = configloader.getDiscordValues()
+
+if databasePresent:
+    databaseConfig = configloader.getDatabaseValues()
+
 ourServer = None
 inProgress = False
 readyUsers = []
@@ -62,10 +67,6 @@ class ReadySystem(commands.Cog):
             else:
                 # add them to the ready list and send a message
                 readyUsers.append(author)
-                # TODO: CREATE MATCH ON USERS READY.
-                #newMatch = db.Match.create(user_id=1, server_id=12, team1_id=1, team2_id=2, skip_veto=True, api_key='asfg',
-                #                           veto_mappool=discordConfig['vetoMapPool'], season_id=int(discordConfig['seasonID']), veto_first='team1', enforce_teams=False)
-                #newMatch.save()
                 if(len(readyUsers) == 8 or len(readyUsers) == 9):
                     embed = discord.Embed(description="<@&" + discordConfig['mentionableID'] + ">" + " we only need " + str(
                         10 - len(readyUsers)) + " more players. `!ready` to join", color=0x03f0fc)
@@ -180,6 +181,7 @@ class ReadySystem(commands.Cog):
         global team1VoiceChannel
         global team2VoiceChannel
 
+        # Get the voice channels.
         if team1VoiceChannel is None:
             team1VoiceChannel = ctx.bot.get_channel(int(discordConfig['team1VoiceChannelID']))
         if team2VoiceChannel is None:
@@ -233,6 +235,8 @@ class ReadySystem(commands.Cog):
                     await ctx.send(embed=embed)
                     await firstCaptain.move_to(team1VoiceChannel)
                     await secondCaptain.move_to(team2VoiceChannel)
+                    if databasePresent:
+                        match = db.create_match(databaseConfig['userID'], databaseConfig['serverID'], "team1")
                     inProgress = False
                     readyUsers = []
                     teamOne = []
@@ -244,11 +248,11 @@ class ReadySystem(commands.Cog):
                 # check if we need to pick again or its other captains turn
                 if (pickNum == 2 or pickNum == 3 or pickNum == 5 or pickNum == 7):
                     embed = discord.Embed(description=secondCaptain.mention + " it is now your pick, pick with " +
-                                          discordConfig['prefix'] + "pick @user. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers))
+                                          discordConfig['prefix'] + "pick @user. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
                 else:
                     embed = discord.Embed(description=firstCaptain.mention + " it is now your pick, pick with " +
-                                          discordConfig['prefix'] + "pick @user. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers))
+                                          discordConfig['prefix'] + "pick @user. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
                 return
 
@@ -276,11 +280,11 @@ class ReadySystem(commands.Cog):
                 pickNum += 1
                 if(pickNum == 1 or pickNum == 4 or pickNum == 6 or pickNum == 8):
                     embed = discord.Embed(description=firstCaptain.mention + " it is now your pick, pick with " +
-                                          discordConfig['prefix'] + "pick @user. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers))
+                                          discordConfig['prefix'] + "pick @user. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
                 else:
                     embed = discord.Embed(description=secondCaptain.mention + " it is now your pick, pick with " +
-                                          discordConfig['prefix'] + "pick @user. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers))
+                                          discordConfig['prefix'] + "pick @user. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
                 return
             else:
