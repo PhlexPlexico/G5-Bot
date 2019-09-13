@@ -8,7 +8,7 @@ G5 Bot will allow you to create an organize ten mans, moving people to respectiv
 Ideally, when the teams are created, a match will inserted into the database, and vetoes and server selection will be done through the Discord, via reacts based on the bots output. It will query the database for any available public servers, check if they're online, and add them to the list of available servers (or pick the first available, haven't decided). Once vetoes and server has been selected, the bot will send a few rcon commands to the server to setup the match, and present you with the match page, ready to connect!
 
 ## How do I run it?
-```
+```python
 python3 -m venv venv
 source venv/bin/activate
 pip3 install requirements.txt
