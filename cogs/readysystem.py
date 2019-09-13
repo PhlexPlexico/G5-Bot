@@ -9,7 +9,7 @@ import os
 # Import our database, if we have none we can still use this bot without DB functionality!
 try:
     import cogs.db as db
-    databasePresent=True
+    databasePresent = True
 except ImportError:
     databasePresent = False
 discordConfig = configloader.getDiscordValues()
@@ -28,6 +28,8 @@ currentPickingCaptain = ""
 pickNum = 1
 team1VoiceChannel = None
 team2VoiceChannel = None
+
+
 class ReadySystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -57,11 +59,11 @@ class ReadySystem(commands.Cog):
         if (not inProgress and len(readyUsers) < 10):
             # check if they are already ready. If debug, then we can allow users to join multiple times.
             if(author in readyUsers and __debug__):
-               embed = discord.Embed(
-                   description=author.mention + "You're already ready, chill.", color=0x03f0fc)
-               await ctx.send(embed=embed)
-               return
-            #actually readying up
+                embed = discord.Embed(
+                    description=author.mention + "You're already ready, chill.", color=0x03f0fc)
+                await ctx.send(embed=embed)
+                return
+            # actually readying up
             else:
                 # add them to the ready list and send a message
                 readyUsers.append(author)
@@ -74,6 +76,7 @@ class ReadySystem(commands.Cog):
                     embed = discord.Embed(
                         description="**WE BALLIN'. Now randomly selecting captains.**", color=0x03f0fc)
                     await ctx.send(embed=embed)
+                    await ctx.trigger_typing()
                     inProgress = True
                     firstCaptain = readyUsers[random.randrange(
                         len(readyUsers))]
@@ -109,8 +112,7 @@ class ReadySystem(commands.Cog):
                                   " You dare leave during the team selection? How dare you.", color=0x3f0fc)
             await ctx.send(embed=embed)
             return
-        
-        
+
         try:
             readyUsers.remove(author)
             # unready message
@@ -168,7 +170,7 @@ class ReadySystem(commands.Cog):
         return
 
     @commands.command()
-    async def pick(self,ctx):
+    async def pick(self, ctx):
         global inProgress
         global readyUsers
         global firstCaptain
@@ -178,12 +180,14 @@ class ReadySystem(commands.Cog):
         global pickNum
         global team1VoiceChannel
         global team2VoiceChannel
-        global match 
+        global match
         # Get the voice channels.
         if team1VoiceChannel is None:
-            team1VoiceChannel = ctx.bot.get_channel(int(discordConfig['team1VoiceChannelID']))
+            team1VoiceChannel = ctx.bot.get_channel(
+                int(discordConfig['team1VoiceChannelID']))
         if team2VoiceChannel is None:
-            team2VoiceChannel = ctx.bot.get_channel(int(discordConfig['team2VoiceChannelID']))
+            team2VoiceChannel = ctx.bot.get_channel(
+                int(discordConfig['team2VoiceChannelID']))
         # make sure they're using the bot setup channel
         if(ctx.message.channel.id != int(discordConfig['setupTextChannelID'])):
             # if they aren't using an appropriate channel, return
@@ -215,7 +219,8 @@ class ReadySystem(commands.Cog):
                 try:
                     await pickedUser.move_to(team1VoiceChannel)
                 except (AttributeError, discord.errors.HTTPException):
-                    embed = discord.Embed(description=str(pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0x03f0fc)
+                    embed = discord.Embed(description=str(
+                        pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0x03f0fc)
                     await ctx.send(embed=embed)
 
                 # remove him from ready users
@@ -228,18 +233,20 @@ class ReadySystem(commands.Cog):
                     embed = discord.Embed(description='''The teams are now made and bot setup is finished.\n
                     Team {}: '''.format(firstCaptain.name) + ", ".join(str(x.name) for x in teamOne) + '''
                     
-                    Team {}: '''.format(secondCaptain.name) + ", ".join(str(x.name) for x in teamTwo) + '''
+                    Team {}: '''.format(secondCaptain.name) + ", ".join(str(x.name) for x in teamTwo) + '''\n
                     ***Now onto vetoes!***''' + '''
-                    For vetoes, please use `!veto map_name` to strike a map. Last map will be the decider.\n\n
-                    Our current maps are: ''' + discordConfig['vetoMapPool'], color=0x3f0fc)
+                    For vetoes, please use `!veto map_name` or `!ban map_name` to strike a map. Last map will be the decider.\n\n
+                    Our current maps are:\n''' + discordConfig['vetoMapPool'].replace(' ', '\n'), color=0x3f0fc)
                     await ctx.send(embed=embed)
                     await firstCaptain.move_to(team1VoiceChannel)
                     await secondCaptain.move_to(team2VoiceChannel)
                     # Randomly select who vetoes first.
-                    vetosystem.currentVeto = 'team1' if random.getrandbits(1) else 'team2'
+                    vetosystem.currentVeto = 'team1' if random.getrandbits(
+                        1) else 'team2'
                     curLocalVeto = vetosystem.currentVeto
                     if databasePresent:
-                        vetosystem.match = db.create_match(databaseConfig['userID'], databaseConfig['serverID'], curLocalVeto)
+                        vetosystem.match = db.create_match(
+                            databaseConfig['userID'], databaseConfig['serverID'], curLocalVeto)
                     inProgress = False
                     readyUsers = []
                     teamOne = []
@@ -279,7 +286,8 @@ class ReadySystem(commands.Cog):
                 try:
                     await pickedUser.move_to(team2VoiceChannel)
                 except (AttributeError, discord.errors.HTTPException):
-                    embed = discord.Embed(description=str(pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0x03f0fc)
+                    embed = discord.Embed(description=str(
+                        pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0x03f0fc)
                     await ctx.send(embed=embed)
 
                 # remove him from ready users
