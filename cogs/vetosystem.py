@@ -166,7 +166,7 @@ class VetoSystem(commands.Cog):
             # if they aren't using an appropriate channel, return
             return
         embed = discord.Embed(
-            description=" \n ".join(str(x) for x in mapList), title="Remaining Maps" color=0xff0000)
+            description=" \n ".join(str(x) for x in mapList), title="Remaining Maps", color=0xff0000)
         await ctx.send(embed=embed)
         return
 
