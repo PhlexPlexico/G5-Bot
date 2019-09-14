@@ -29,8 +29,24 @@ class VetoSystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+
     @commands.command(aliases=['ban'])
     async def veto(self, ctx, arg):
+        """Strikes a map from the given veto list in the config.
+        
+        If the bot maintainer has chosen to install Get5-Web, it will also add the vetoes to the match database.
+        Once the vetoes are completed, the users will then wait for the bot to configure either the given server,
+        or a publically available server on the webpanel(first available). Some variables within this module
+        are modified from the readysystem, since we need to pass over the match and captains.
+        
+        Paramaters
+        ----------
+        ctx : Context
+            Represents the context in which a command is being invoked under.
+        arg : str
+            Usually the map to strike from the veto."""
+
+
         global mapList
         global currentVeto
         global match
@@ -141,6 +157,42 @@ class VetoSystem(commands.Cog):
                 inProgress = False
             return
 
+    @commands.command()
+    async def maps(self, ctx):
+        global mapList
+        """ Returns the current maps that can be striken from the veto """
+        # make sure they're using the bot setup channel
+        if(ctx.message.channel.id != int(discordConfig['setupTextChannelID'])):
+            # if they aren't using an appropriate channel, return
+            return
+        embed = discord.Embed(
+            description=" \n ".join(str(x) for x in mapList), title="Remaining Maps" color=0xff0000)
+        await ctx.send(embed=embed)
+        return
+
+    @commands.command()
+    async def stop(self, ctx):
+        global mapList
+        global currentVeto
+        global match
+        global firstCaptain
+        global secondCaptain
+        global inProgress
+        """ Remove the vetoes and match from the database. """
+        # make sure they're using the bot setup channel
+        if(ctx.message.channel.id != int(discordConfig['setupTextChannelID'])):
+            # if they aren't using an appropriate channel, return
+            return
+        if(databasePresent):
+            db.delete_vetoes(match.id)
+            db.delete_match(match.id)
+            match = None
+        mapList = discordConfig['vetoMapPool'].split(' ')
+        currentVeto = None
+        firstCaptain = None
+        secondCaptain = None
+        inProgress = False
+        return
 
 def setup(bot):
     bot.add_cog(VetoSystem(bot))

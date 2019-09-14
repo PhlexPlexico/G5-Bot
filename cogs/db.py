@@ -22,7 +22,6 @@ def get_server(server_id):
     server = Game_server.get(server_id)
     return server
 
-
 def create_match(user_id, server_id, veto_first):
     api_key = ''.join(random.SystemRandom().choice(
         string.ascii_uppercase + string.digits) for _ in range(24))
@@ -31,6 +30,10 @@ def create_match(user_id, server_id, veto_first):
     match.save()
     return match
 
+def delete_match(match_id):
+    match = Match.get(match_id)
+    match.delete_instance()
+    return
 
 def create_veto(match_id, team_name, mapName, pick_or_veto):
     veto = Veto.create(match_id=match_id, team_name=team_name,
@@ -38,6 +41,9 @@ def create_veto(match_id, team_name, mapName, pick_or_veto):
     veto.save()
     return veto
 
+def delete_vetoes(match_id):
+    Veto.delete().where(match_id==match_id)
+    return
 
 def update_match_first_veto(match_id, firstVeto):
     match = Match.select().where(Match.id == match_id).get()

@@ -180,7 +180,6 @@ class ReadySystem(commands.Cog):
         global pickNum
         global team1VoiceChannel
         global team2VoiceChannel
-        global match
         # Get the voice channels.
         if team1VoiceChannel is None:
             team1VoiceChannel = ctx.bot.get_channel(
@@ -200,7 +199,7 @@ class ReadySystem(commands.Cog):
                 # get the user they picked
                 if(len(message.mentions) != 1):
                     embed = discord.Embed(
-                        description="Please pick a user by @ing them. " + discordConfig['prefix'] + "pick @user", color=0x03f0fc)
+                        description="Please pick a user by @ing them. `" + discordConfig['prefix'] + "pick @user`", color=0x03f0fc)
                     await ctx.send(embed=embed)
                     return
 
@@ -262,12 +261,12 @@ class ReadySystem(commands.Cog):
                     return
                 # check if we need to pick again or its other captains turn
                 if (pickNum == 2 or pickNum == 3 or pickNum == 5 or pickNum == 7):
-                    embed = discord.Embed(description=secondCaptain.mention + " it is now your pick, pick with " +
-                                          discordConfig['prefix'] + "pick @user. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
+                    embed = discord.Embed(description=secondCaptain.mention + " it is now your pick, pick with `" +
+                                          discordConfig['prefix'] + "pick @user`. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
                 else:
-                    embed = discord.Embed(description=firstCaptain.mention + " it is now your pick, pick with " +
-                                          discordConfig['prefix'] + "pick @user. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
+                    embed = discord.Embed(description=firstCaptain.mention + " it is now your pick, pick with `" +
+                                          discordConfig['prefix'] + "pick @user`. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
                 return
 
@@ -275,7 +274,7 @@ class ReadySystem(commands.Cog):
                 # get the user they picked
                 if(len(message.mentions) != 1):
                     embed = discord.Embed(
-                        description="Please pick a user by @ing them. " + discordConfig['prefix'] + "pick @user", color=0x03f0fc)
+                        description="Please pick a user by @ing them. `" + discordConfig['prefix'] + "pick @user`", color=0x03f0fc)
                     await ctx.send(embed=embed)
                     return
 
@@ -295,12 +294,12 @@ class ReadySystem(commands.Cog):
 
                 pickNum += 1
                 if(pickNum == 1 or pickNum == 4 or pickNum == 6 or pickNum == 8):
-                    embed = discord.Embed(description=firstCaptain.mention + " it is now your pick, pick with " +
-                                          discordConfig['prefix'] + "pick @user. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
+                    embed = discord.Embed(description=firstCaptain.mention + " it is now your pick, pick with `" +
+                                          discordConfig['prefix'] + "pick @user`. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
                 else:
-                    embed = discord.Embed(description=secondCaptain.mention + " it is now your pick, pick with " +
-                                          discordConfig['prefix'] + "pick @user. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
+                    embed = discord.Embed(description=secondCaptain.mention + " it is now your pick, pick with `" +
+                                          discordConfig['prefix'] + "pick @user`. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
                 return
             else:
