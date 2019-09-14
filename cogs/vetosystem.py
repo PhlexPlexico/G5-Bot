@@ -183,15 +183,24 @@ class VetoSystem(commands.Cog):
         if(ctx.message.channel.id != int(discordConfig['setupTextChannelID'])):
             # if they aren't using an appropriate channel, return
             return
-        if(databasePresent):
-            db.delete_vetoes(match.id)
-            db.delete_match(match.id)
-            match = None
-        mapList = discordConfig['vetoMapPool'].split(' ')
-        currentVeto = None
-        firstCaptain = None
-        secondCaptain = None
-        inProgress = False
+        if (ctx.author != firstCaptain or ctx.author != secondCaptain):
+            embed = discord.Embed(
+                description="**{}, you are not a captain. Can you don't?**".format(ctx.author.mention), color=0xff0000)
+            await ctx.send(embed=embed)
+        elif(inProgress):
+            if(databasePresent):
+                db.delete_vetoes(match.id)
+                db.delete_match(match.id)
+                match = None
+            mapList = discordConfig['vetoMapPool'].split(' ')
+            currentVeto = None
+            firstCaptain = None
+            secondCaptain = None
+            inProgress = False
+        else:
+            embed = discord.Embed(
+            description="Can't stop what hasn't been started.", color=0xff0000)
+            await ctx.send(embed=embed)
         return
 
 def setup(bot):
