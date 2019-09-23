@@ -29,23 +29,21 @@ class VetoSystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-
     @commands.command(aliases=['ban'])
     async def veto(self, ctx, arg):
         """Strikes a map from the given veto list in the config.
-        
+
         If the bot maintainer has chosen to install Get5-Web, it will also add the vetoes to the match database.
         Once the vetoes are completed, the users will then wait for the bot to configure either the given server,
         or a publically available server on the webpanel(first available). Some variables within this module
         are modified from the readysystem, since we need to pass over the match and captains.
-        
+
         Paramaters
         ----------
         ctx : Context
             Represents the context in which a command is being invoked under.
         arg : str
             Usually the map to strike from the veto."""
-
 
         global mapList
         global currentVeto
@@ -76,6 +74,10 @@ class VetoSystem(commands.Cog):
                         description="**{} It is not your turn to veto. C'mon dude.**".format(ctx.author.mention), color=0xff0000)
                     await ctx.send(embed=embed)
                     return
+            else:
+                embed = discord.Embed(
+                    description="**{} is currently selecting, but captain is {} or {}**".format(ctx.author.mention, firstCaptain, secondCaptain), color=0xff0000)
+                await ctx.send(embed=embed)
             # Check to see if map exists in our message. Let users choose to use de or not.
             try:
                 if(arg.startswith("de_")):
@@ -199,9 +201,19 @@ class VetoSystem(commands.Cog):
             inProgress = False
         else:
             embed = discord.Embed(
-            description="Can't stop what hasn't been started.", color=0xff0000)
+                description="Can't stop what hasn't been started.", color=0xff0000)
             await ctx.send(embed=embed)
         return
+
+    @commands.command()
+    async def captains(self, ctx):
+        global firstCaptain
+        global secondCaptain
+        embed = discord.Embed(
+            description="Your captains today are: {} and {}".format(firstCaptain, secondCaptain), color=0x03f0fc)
+        await ctx.send(embed=embed)
+        return
+
 
 def setup(bot):
     bot.add_cog(VetoSystem(bot))

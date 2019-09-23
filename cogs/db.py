@@ -42,7 +42,7 @@ def create_veto(match_id, team_name, mapName, pick_or_veto):
     return veto
 
 def delete_vetoes(match_id):
-    Veto.delete().where(match_id==match_id)
+    Veto.delete().where(match_id==match_id).execute()
     return
 
 def update_match_first_veto(match_id, firstVeto):
