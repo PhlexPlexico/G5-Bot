@@ -243,7 +243,7 @@ class ReadySystem(commands.Cog):
                     Team {}: '''.format(secondCaptain.name) + ", ".join(str(x.name) for x in teamTwo) + '''\n
                     ***Now onto vetoes!***''' + '''
                     For vetoes, please use `{}veto map_name` or `{}ban map_name` to strike a map. Last map will be the decider.\n\n
-                    **Our current maps are:**\n'''.format(discordConfig.prefix, discordConfig.prefix) + discordConfig['vetoMapPool'].replace(' ', '\n')+
+                    **Our current maps are:**\n'''.format(discordConfig['prefix'], discordConfig['prefix']) + discordConfig['vetoMapPool'].replace(' ', '\n')+
                     "\n**{}** please make the first veto.".format(firstToVeto), color=0x3f0fc)
                     await ctx.send(embed=embed)
                     await firstCaptain.move_to(team1VoiceChannel)
