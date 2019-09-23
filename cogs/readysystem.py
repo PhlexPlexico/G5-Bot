@@ -229,20 +229,25 @@ class ReadySystem(commands.Cog):
                 pickNum += 1
                 # check if we're done picking
                 if(pickNum == 9):
+                    # Randomly select who vetoes first.
+                    vetosystem.currentVeto = 'team1' if random.getrandbits(
+                        1) else 'team2'
+                    curLocalVeto = vetosystem.currentVeto
+                    if (curLocalVeto == "team1"):
+                        firstToVeto = "team_{}".format(firstCaptain)
+                    else:
+                        firstToVeto = "team_{}".format(secondCaptain)
                     embed = discord.Embed(description='''The teams are now made and bot setup is finished.\n
                     Team {}: '''.format(firstCaptain.name) + ", ".join(str(x.name) for x in teamOne) + '''
                     
                     Team {}: '''.format(secondCaptain.name) + ", ".join(str(x.name) for x in teamTwo) + '''\n
                     ***Now onto vetoes!***''' + '''
                     For vetoes, please use `{}veto map_name` or `{}ban map_name` to strike a map. Last map will be the decider.\n\n
-                    Our current maps are:\n'''.format(discordConfig.prefix, discordConfig.prefix) + discordConfig['vetoMapPool'].replace(' ', '\n'), color=0x3f0fc)
+                    **Our current maps are:**\n'''.format(discordConfig.prefix, discordConfig.prefix) + discordConfig['vetoMapPool'].replace(' ', '\n')+
+                    "\n**{}** please make the first veto.".format(firstToVeto), color=0x3f0fc)
                     await ctx.send(embed=embed)
                     await firstCaptain.move_to(team1VoiceChannel)
                     await secondCaptain.move_to(team2VoiceChannel)
-                    # Randomly select who vetoes first.
-                    vetosystem.currentVeto = 'team1' if random.getrandbits(
-                        1) else 'team2'
-                    curLocalVeto = vetosystem.currentVeto
                     if databasePresent:
                         vetosystem.match = db.create_match(
                             databaseConfig['userID'], databaseConfig['serverID'], curLocalVeto)
