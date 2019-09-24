@@ -59,17 +59,17 @@ class VetoSystem(commands.Cog):
             # Who's turn is it to veto? Check if it's the captain and if it's their turn.
             # await ctx.send("Our captain name {} current veto {}".format(firstCaptain.name, currentVeto))
             if (__debug__):
-                if (ctx.author != firstCaptain or ctx.author != secondCaptain):
+                if (ctx.author.id != firstCaptain or ctx.author.id != secondCaptain):
                     embed = discord.Embed(
                         description="**{}, you are not a captain. Can you don't?**".format(ctx.author.mention), color=0xff0000)
                     await ctx.send(embed=embed)
                     return
-                elif (ctx.author == firstCaptain and currentVeto == 'team2'):
+                elif (ctx.author.id == firstCaptain and currentVeto == 'team2'):
                     embed = discord.Embed(
                         description="**{} It is not your turn to veto. C'mon dude.**".format(ctx.author.mention), color=0xff0000)
                     await ctx.send(embed=embed)
                     return
-                elif (ctx.author == secondCaptain and currentVeto == 'team1'):
+                elif (ctx.author.id == secondCaptain and currentVeto == 'team1'):
                     embed = discord.Embed(
                         description="**{} It is not your turn to veto. C'mon dude.**".format(ctx.author.mention), color=0xff0000)
                     await ctx.send(embed=embed)
@@ -185,7 +185,7 @@ class VetoSystem(commands.Cog):
         if(ctx.message.channel.id != int(discordConfig['setupTextChannelID'])):
             # if they aren't using an appropriate channel, return
             return
-        if (ctx.author != firstCaptain or ctx.author != secondCaptain):
+        if (ctx.author.id != firstCaptain or ctx.author.id != secondCaptain):
             embed = discord.Embed(
                 description="**{}, you are not a captain. Can you don't?**".format(ctx.author.mention), color=0xff0000)
             await ctx.send(embed=embed)

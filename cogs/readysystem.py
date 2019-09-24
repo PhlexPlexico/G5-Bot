@@ -88,7 +88,7 @@ class ReadySystem(commands.Cog):
                                           firstCaptain.mention + "\nTeam: " + secondCaptain.mention, color=0x03f0fc)
                     await ctx.send(embed=embed)
                     embed = discord.Embed(description=firstCaptain.mention + " it is now your pick, pick with `" + discordConfig['prefix'] +
-                                          "pick @user`. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
+                                          "pick @user`. Please choose from\n" + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
                 elif(len(readyUsers) != 0):
                     embed = discord.Embed(description=author.mention + " **is now ready, we need **" + str(
@@ -255,9 +255,9 @@ class ReadySystem(commands.Cog):
                     readyUsers = []
                     teamOne = []
                     teamTwo = []
-                    # Passing the buck.
-                    vetosystem.firstCaptain = firstCaptain
-                    vetosystem.secondCaptain = secondCaptain
+                    # Passing the buck. Use unique IDs instead?
+                    vetosystem.firstCaptain = firstCaptain.id
+                    vetosystem.secondCaptain = secondCaptain.id
                     vetosystem.inProgress = True
 
                     firstCaptain = None
