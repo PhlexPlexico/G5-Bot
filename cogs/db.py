@@ -58,6 +58,21 @@ def update_match_maps(match_id, mappool):
     match.save()
     return
 
+def update_auths_in_team(auth_list, team_id):
+    team = Team.select().where(Team.id == team_id).get()
+    team.auths = auth_list
+    team.save()
+    return
+
+def append_auths_in_team(single_auth, team_id):
+    team = Team.select().where(Team.id == team_id).get()
+    team.auths = list(team.auths).append(single_auth)
+    team.save()
+    return
+
+def get_total_team_auth(team_id):
+    team = Team.select().where(Team.id == team_id).get()
+    return len(list(team.auths))
 
 class BaseModel(pw.Model):
     """A base model that will use our MySQL database"""
@@ -120,5 +135,8 @@ class Veto(BaseModel):
     map = pw.CharField(max_length=32)
     pick_or_veto = pw.CharField(max_length=4)
 
+class Team(BaseModel):
+    id = pw.AutoField()
+    auths = pw.BlobField()
 
 db.connect()
