@@ -214,6 +214,44 @@ class VetoSystem(commands.Cog):
         await ctx.send(embed=embed)
         return
 
+    @commands.command()
+    async def matchadd(self, ctx, arg):
+        # make sure they're using the bot setup channel
+        if(ctx.message.channel.id != int(discordConfig['setupTextChannelID'])):
+            # if they aren't using an appropriate channel, return
+            return
+        if(inProgress and len(mapList) != 1):
+            if (__debug__):
+                if (ctx.author.id != firstCaptain or ctx.author.id != secondCaptain):
+                    embed = discord.Embed(
+                        description="**{}, you are not a captain. Can you don't?**".format(ctx.author.mention), color=0xff0000)
+                    await ctx.send(embed=embed)
+                    return
+            else:
+                embed = discord.Embed(
+                    description="**{} you are not a captain, and cannot add users to your own team. The captains are: {} and {}**".format(ctx.author.mention, firstCaptain, secondCaptain), color=0xff0000)
+                await ctx.send(embed=embed)
+        try:
+            if(ctx.author.id == firstCaptain):
+                team = databaseConfig["team1ScrimID"]
+            else:
+                team = databaseConfig["team2ScrimID"]
+            steam_id = int(arg)
+            if (db.get_total_team_auth(team) > 5):
+                embed = discord.Embed(
+                    description="We already have 5 memebers in your team. Don't do that you cheater.", color=0xff0000)
+                await ctx.send(embed=embed)
+            else:
+                # Successful steam ID to add into the game.
+                db.append_auths_in_team(steam_id, team)
+                embed = discord.Embed(
+                    description="Player has been successfully added to team.", color=0xff0000)
+                await ctx.send(embed=embed)
+        except ValueError:
+            embed = discord.Embed(
+                    description="We can't insert a non-integer value into the database. Please don't.", color=0xff0000)
+            await ctx.send(embed=embed)
+        return
 
 def setup(bot):
     bot.add_cog(VetoSystem(bot))

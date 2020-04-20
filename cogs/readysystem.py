@@ -28,7 +28,8 @@ currentPickingCaptain = ""
 pickNum = 1
 team1VoiceChannel = None
 team2VoiceChannel = None
-
+teamOneSteamID = []
+teamTwoSteamID = []
 
 class ReadySystem(commands.Cog):
     def __init__(self, bot):
@@ -139,6 +140,8 @@ class ReadySystem(commands.Cog):
         global teamOne
         global teamTwo
         global pickNum
+        global teamOneSteamID
+        global teamTwoSteamID
 
         inProgress = False
         readyUsers = []
@@ -147,6 +150,8 @@ class ReadySystem(commands.Cog):
         firstCaptain = None
         secondCaptain = None
         pickNum = 1
+        teamOneSteamID = []
+        teamTwoSteamID = []
         embed = discord.Embed(
             description="**Current 10man finished, need** 10 **readied players**", color=0xff0000)
         await ctx.send(embed=embed)
@@ -213,7 +218,15 @@ class ReadySystem(commands.Cog):
 
                 # add him to team one
                 teamOne.append(pickedUser)
-
+                # Feature #6 - Add player auth to a list and append to database once completed.
+                for service in pickedUser.connected_accounts:
+                    if (service.type == "steam"):
+                        teamOneSteamID.append(service.id)
+                        embed = discord.Embed(description=str(
+                            pickedUser) + " `has a Steam account connected. Appending to get5 team.`", color=0x03f0fc)
+                        await ctx.send(embed=embed)
+                        break
+                    
                 # move him to voice channel for team 1
                 try:
                     await pickedUser.move_to(team1VoiceChannel)
@@ -251,6 +264,17 @@ class ReadySystem(commands.Cog):
                     if databasePresent:
                         vetosystem.match = db.create_match(
                             databaseConfig['userID'], databaseConfig['serverID'], curLocalVeto)
+                        if (len(teamOneSteamID) != 5):
+                            embed = discord.Embed(
+                                description="There is currently not 5 people ready in the first team. {} please append the users steam ID to your team with {}`".format(firstCaptain.mention, discordConfig['prefix']), color=0x03f0fc)
+                            await ctx.send(embed=embed)
+                        if (len(teamTwoSteamID) != 5):
+                            embed = discord.Embed(
+                                description="There is currently not 5 people ready in the second team. {} please append the users steam ID to your team with {}matchadd STEAM64`".format(secondCaptain.mention, discordConfig['prefix']), color=0x03f0fc)
+                            await ctx.send(embed=embed)
+                        # Now that we gave a warning, let's add in our users to the database.
+                        db.update_auths_in_team(teamOneSteamID, databaseConfig['team1ScrimID'])
+                        db.update_auths_in_team(teamTwoSteamID, databaseConfig['team2ScrimID'])
                     inProgress = False
                     readyUsers = []
                     teamOne = []
@@ -260,6 +284,8 @@ class ReadySystem(commands.Cog):
                     vetosystem.secondCaptain = secondCaptain.id
                     vetosystem.inProgress = True
 
+                    teamOneSteamID = []
+                    teamTwoSteamID = []
                     firstCaptain = None
                     secondCaptain = None
                     pickNum = 1
@@ -293,6 +319,15 @@ class ReadySystem(commands.Cog):
                     embed = discord.Embed(description=str(
                         pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0x03f0fc)
                     await ctx.send(embed=embed)
+
+                # Feature #6 - Add player auth to a list and append to database once completed.  
+                for service in pickedUser.connected_accounts:
+                    if (service.type == "steam"):
+                        teamTwoSteamID.append(service.id)
+                        embed = discord.Embed(description=str(
+                            pickedUser) + " `has a Steam account connected. Appending to get5 team.`", color=0x03f0fc)
+                        await ctx.send(embed=embed)
+                        break
 
                 # remove him from ready users
                 readyUsers.remove(pickedUser)
