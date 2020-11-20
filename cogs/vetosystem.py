@@ -1,21 +1,12 @@
 import asyncio
 import discord
 import cogs.utils.configloader as configloader
-import cogs.utils.dbutil as dbutil
 import random
 from discord.ext import commands
 from discord.ext.commands import bot
 import os
-# Import our database, if we have none we can still use this bot without DB functionality!
-try:
-    import cogs.db as db
-    databasePresent = True
-except ImportError:
-    databasePresent = False
 discordConfig = configloader.getDiscordValues()
 
-if databasePresent:
-    databaseConfig = configloader.getDatabaseValues()
 mapList = discordConfig['vetoMapPool'].split(' ')
 # Set in readysystem first, then here.
 currentVeto = None
@@ -90,8 +81,6 @@ class VetoSystem(commands.Cog):
                 await ctx.send(embed=embed)
                 return
             # Now that everything is checked and we're successful, let's move on.
-            if (databasePresent):
-                db.create_veto(match.id, 'team_' + ctx.author.name, arg, 'ban')
             embed = discord.Embed(
                 description="**Maps**\n" + " \n ".join(str(x) for x in mapList), color=0x03f0fc)
             await ctx.send(embed=embed)
@@ -114,43 +103,6 @@ class VetoSystem(commands.Cog):
                 inProgress = False
                 firstCaptain = None
                 secondCaptain = None
-                if(databasePresent):
-                    db.create_veto(match.id, 'Decider', mapList[0], 'pick')
-                    db.update_match_maps(match.id, str(mapList[0]))
-                    embed = discord.Embed(
-                        description="**But wait, there's more!**\nGet5 has been enabled on this bot. Now configuring server and match, please wait...", color=0x03f0fc)
-                    await ctx.send(embed=embed)
-                    await ctx.trigger_typing()
-                    # Get server ID from config. If not present, or occupied, then grab the first available public server.
-                    if (databaseConfig['serverID']):
-                        server = db.get_server(int(databaseConfig['serverID']))
-                    if (server is None):
-                        # Begin getting first available server.
-                        servers = db.get_available_public_servers()
-                        # Cycle through and ping to see if available, grab first available.
-                        for singleServer in servers:
-                            # Check if online.
-                            if(dbutil.check_server_connection(databaseConfig['encryptionKey'].encode("latin-1"), singleServer)):
-                                server = singleServer
-                                break
-                    # We now have the server and it's available! Setup the match.
-                    url = databaseConfig['get5host'].replace("http://", "")
-                    url = databaseConfig['get5host'].replace("https://", "")
-                    rconPassword = dbutil.decrypt(databaseConfig['encryptionKey'].encode(
-                        "latin-1"), server.rcon_password).decode("latin-1")
-                    loadmatchResponse = dbutil.send_rcon_command(
-                        server.ip_string, server.port, rconPassword, 'get5_loadmatch_url ' + url)
-                    dbutil.send_rcon_command(
-                        server.ip_string, server.port, rconPassword, 'get5_web_api_key ' + match.api_key)
-                    dbutil.send_rcon_command(
-                        server.ip_string, server.port, rconPassword, 'map {}'.format(str(mapList[0])))
-                    if (loadmatchResponse):
-                        embed = discord.Embed(
-                            description="ERROR ERROR ERROR ", color=0xff0000)
-                        await ctx.send(embed=embed)
-                    embed = discord.Embed(description="Match setup successfully! Please navigate to {}/match/{} and connect from there.".format(
-                        databaseConfig['get5host'], match.id), color=0x32CD32)
-                    await ctx.send(embed=embed)
                 mapList = discordConfig['vetoMapPool'].split(' ')
                 currentVeto = None
                 match = None

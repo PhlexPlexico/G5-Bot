@@ -1,21 +1,15 @@
 import asyncio
 import discord
+import cogs.utils.api as api
 import cogs.utils.configloader as configloader
 import random
 import cogs.vetosystem as vetosystem
+from cogs.linksystem import checkLink
 from discord.ext import commands
 from discord.ext.commands import bot
 import os
-# Import our database, if we have none we can still use this bot without DB functionality!
-try:
-    import cogs.db as db
-    databasePresent = True
-except ImportError:
-    databasePresent = False
 discordConfig = configloader.getDiscordValues()
 
-if databasePresent:
-    databaseConfig = configloader.getDatabaseValues()
 
 ourServer = None
 inProgress = False
@@ -30,6 +24,8 @@ team1VoiceChannel = None
 team2VoiceChannel = None
 teamOneSteamID = []
 teamTwoSteamID = []
+team1ApiID = -1
+team2ApiID = -1
 
 class ReadySystem(commands.Cog):
     def __init__(self, bot):
@@ -46,6 +42,8 @@ class ReadySystem(commands.Cog):
         global teamOne
         global teamTwo
         global pickNum
+        global team1ApiID
+        global team2ApiID
 
         # extract the author and message from context.
         author = ctx.author
@@ -62,6 +60,11 @@ class ReadySystem(commands.Cog):
             if(author in readyUsers and __debug__):
                 embed = discord.Embed(
                     description=author.mention + "You're already ready, chill.", color=0x03f0fc)
+                await ctx.send(embed=embed)
+                return
+            elif (checkLink(author.id) and __debug__):
+                embed = discord.Embed(
+                    description=author.mention + "You haven't linked accounts. Please use !link \{steam account\} before continuing.", color=0x03f0fc)
                 await ctx.send(embed=embed)
                 return
             # actually readying up
@@ -91,6 +94,9 @@ class ReadySystem(commands.Cog):
                     embed = discord.Embed(description=firstCaptain.mention + " it is now your pick, pick with `" + discordConfig['prefix'] +
                                           "pick @user`. Please choose from\n" + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
+
+                    team1ApiID = api.createTeam("team_"+firstCaptain.name)
+                    team2ApiID = api.createTeam("team_"+secondCaptain.name)
                 elif(len(readyUsers) != 0):
                     embed = discord.Embed(description=author.mention + " **is now ready, we need **" + str(
                         10 - len(readyUsers)) + " **more**", color=0x03f0fc)
@@ -142,6 +148,8 @@ class ReadySystem(commands.Cog):
         global pickNum
         global teamOneSteamID
         global teamTwoSteamID
+        global team1ApiID
+        global team2ApiID
 
         inProgress = False
         readyUsers = []
@@ -152,6 +160,11 @@ class ReadySystem(commands.Cog):
         pickNum = 1
         teamOneSteamID = []
         teamTwoSteamID = []
+        # Don't care if we don't delete or not, just force it.
+        api.deleteTeam(team1ApiID)
+        api.deleteTeam(team2ApiID)
+        team1ApiID = -1
+        team2ApiID = -1
         embed = discord.Embed(
             description="**Current 10man finished, need** 10 **readied players**", color=0xff0000)
         await ctx.send(embed=embed)
@@ -218,14 +231,15 @@ class ReadySystem(commands.Cog):
 
                 # add him to team one
                 teamOne.append(pickedUser)
+                #TODO: Add in user via API call to team.
                 # Feature #6 - Add player auth to a list and append to database once completed.
-                for service in pickedUser.connected_accounts:
-                    if (service.type == "steam"):
-                        teamOneSteamID.append(service.id)
-                        embed = discord.Embed(description=str(
-                            pickedUser) + " `has a Steam account connected. Appending to get5 team.`", color=0x03f0fc)
-                        await ctx.send(embed=embed)
-                        break
+                # for service in pickedUser.profile().connected_accounts:
+                #     if (service.type == "steam"):
+                #         teamOneSteamID.append(service.id)
+                #         embed = discord.Embed(description=str(
+                #             pickedUser) + " `has a Steam account connected. Appending to get5 team.`", color=0x03f0fc)
+                #         await ctx.send(embed=embed)
+                #         break
                     
                 # move him to voice channel for team 1
                 try:
@@ -261,20 +275,6 @@ class ReadySystem(commands.Cog):
                     await ctx.send(embed=embed)
                     await firstCaptain.move_to(team1VoiceChannel)
                     await secondCaptain.move_to(team2VoiceChannel)
-                    if databasePresent:
-                        vetosystem.match = db.create_match(
-                            databaseConfig['userID'], databaseConfig['serverID'], curLocalVeto)
-                        if (len(teamOneSteamID) != 5):
-                            embed = discord.Embed(
-                                description="There is currently not 5 people ready in the first team. {} please append the users steam ID to your team with {}`".format(firstCaptain.mention, discordConfig['prefix']), color=0x03f0fc)
-                            await ctx.send(embed=embed)
-                        if (len(teamTwoSteamID) != 5):
-                            embed = discord.Embed(
-                                description="There is currently not 5 people ready in the second team. {} please append the users steam ID to your team with {}matchadd STEAM64`".format(secondCaptain.mention, discordConfig['prefix']), color=0x03f0fc)
-                            await ctx.send(embed=embed)
-                        # Now that we gave a warning, let's add in our users to the database.
-                        db.update_auths_in_team(teamOneSteamID, databaseConfig['team1ScrimID'])
-                        db.update_auths_in_team(teamTwoSteamID, databaseConfig['team2ScrimID'])
                     inProgress = False
                     readyUsers = []
                     teamOne = []
@@ -320,14 +320,15 @@ class ReadySystem(commands.Cog):
                         pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0x03f0fc)
                     await ctx.send(embed=embed)
 
+                # TODO: API call to add user to team.
                 # Feature #6 - Add player auth to a list and append to database once completed.  
-                for service in pickedUser.connected_accounts:
-                    if (service.type == "steam"):
-                        teamTwoSteamID.append(service.id)
-                        embed = discord.Embed(description=str(
-                            pickedUser) + " `has a Steam account connected. Appending to get5 team.`", color=0x03f0fc)
-                        await ctx.send(embed=embed)
-                        break
+                # for service in pickedUser.connected_accounts:
+                #     if (service.type == "steam"):
+                #         teamTwoSteamID.append(service.id)
+                #         embed = discord.Embed(description=str(
+                #             pickedUser) + " `has a Steam account connected. Appending to get5 team.`", color=0x03f0fc)
+                #         await ctx.send(embed=embed)
+                #         break
 
                 # remove him from ready users
                 readyUsers.remove(pickedUser)
