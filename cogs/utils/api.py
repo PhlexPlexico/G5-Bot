@@ -1,6 +1,7 @@
 import asyncio
 import requests
 import sqlite3
+import datetime
 import cogs.utils.configloader as config
 
 apiValues = config.getAPIValues()
@@ -91,3 +92,25 @@ def deleteTeam(teamID):
         except Exception as error:
             print(error)
             return False
+
+def createMatch(team1id, team2id):
+    if(tryAuth):
+        try:
+            myJSONMatch = [
+                {
+                    'user_id': apiValues['userID'],
+                    'user_api': apiValues['userKey'],
+                    'team1_id': team1id,
+                    'team2_id': team2id,
+                    'title': '[PUG] Map {MAPNUMBER} of {MAXMAPS}',
+                    'is_pug': 1,
+                    'start_time': datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+                    'ignore_server': True,
+                    'max_maps': 1
+                }
+            ]
+            retVal = requests.post(url=apiValues['get5host']+'/matches', json=myJSONMatch)
+            return retVal.json()['id']
+        except Exception as error:
+            print(error)
+            return -1

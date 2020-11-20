@@ -26,6 +26,7 @@ teamOneSteamID = []
 teamTwoSteamID = []
 team1ApiID = -1
 team2ApiID = -1
+matchApiID = -1
 
 class ReadySystem(commands.Cog):
     def __init__(self, bot):
@@ -44,6 +45,7 @@ class ReadySystem(commands.Cog):
         global pickNum
         global team1ApiID
         global team2ApiID
+        global matchApiID
 
         # extract the author and message from context.
         author = ctx.author
@@ -150,6 +152,7 @@ class ReadySystem(commands.Cog):
         global teamTwoSteamID
         global team1ApiID
         global team2ApiID
+        global matchApiID
 
         inProgress = False
         readyUsers = []
@@ -165,6 +168,7 @@ class ReadySystem(commands.Cog):
         api.deleteTeam(team2ApiID)
         team1ApiID = -1
         team2ApiID = -1
+        matchApiID = -1
         embed = discord.Embed(
             description="**Current 10man finished, need** 10 **readied players**", color=0xff0000)
         await ctx.send(embed=embed)
@@ -270,6 +274,9 @@ class ReadySystem(commands.Cog):
                     readyUsers = []
                     teamOne = []
                     teamTwo = []
+
+                    # Create the match without the server.
+                    matchApiID = api.createMatch(team1ApiID, team2ApiID)
                     # Passing the buck. Use unique IDs instead?
                     vetosystem.firstCaptain = firstCaptain.id
                     vetosystem.secondCaptain = secondCaptain.id
