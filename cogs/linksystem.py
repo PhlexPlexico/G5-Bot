@@ -14,7 +14,7 @@ class LinkSystem(commands.Cog):
         if not os.path.isfile(r"./steam_auths.db"):
             db = sqlite3.connect(r"./steam_auths.db")
             newCur = db.cursor()
-            newCur.execute('''CREATE TABLE steam_auth (discord_id, steam_id)''')
+            newCur.execute("CREATE TABLE steam_auth (discord_id, steam_id)")
             db.commit()
         self.bot = bot
     

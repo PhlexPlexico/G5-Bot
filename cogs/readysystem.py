@@ -95,8 +95,8 @@ class ReadySystem(commands.Cog):
                                           "pick @user`. Please choose from\n" + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
 
-                    team1ApiID = api.createTeam("team_"+firstCaptain.name)
-                    team2ApiID = api.createTeam("team_"+secondCaptain.name)
+                    team1ApiID = api.createTeam("team_"+firstCaptain.name, firstCaptain.id, firstCaptain.name)
+                    team2ApiID = api.createTeam("team_"+secondCaptain.name, secondCaptain.id, secondCaptain.name)
                 elif(len(readyUsers) != 0):
                     embed = discord.Embed(description=author.mention + " **is now ready, we need **" + str(
                         10 - len(readyUsers)) + " **more**", color=0x03f0fc)
@@ -231,16 +231,7 @@ class ReadySystem(commands.Cog):
 
                 # add him to team one
                 teamOne.append(pickedUser)
-                #TODO: Add in user via API call to team.
-                # Feature #6 - Add player auth to a list and append to database once completed.
-                # for service in pickedUser.profile().connected_accounts:
-                #     if (service.type == "steam"):
-                #         teamOneSteamID.append(service.id)
-                #         embed = discord.Embed(description=str(
-                #             pickedUser) + " `has a Steam account connected. Appending to get5 team.`", color=0x03f0fc)
-                #         await ctx.send(embed=embed)
-                #         break
-                    
+                api.addPlayer(team1ApiID, pickedUser.id, pickedUser.name)
                 # move him to voice channel for team 1
                 try:
                     await pickedUser.move_to(team1VoiceChannel)
@@ -320,15 +311,7 @@ class ReadySystem(commands.Cog):
                         pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0x03f0fc)
                     await ctx.send(embed=embed)
 
-                # TODO: API call to add user to team.
-                # Feature #6 - Add player auth to a list and append to database once completed.  
-                # for service in pickedUser.connected_accounts:
-                #     if (service.type == "steam"):
-                #         teamTwoSteamID.append(service.id)
-                #         embed = discord.Embed(description=str(
-                #             pickedUser) + " `has a Steam account connected. Appending to get5 team.`", color=0x03f0fc)
-                #         await ctx.send(embed=embed)
-                #         break
+                api.addPlayer(team2ApiID, pickedUser.id, pickedUser.name)
 
                 # remove him from ready users
                 readyUsers.remove(pickedUser)
