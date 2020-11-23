@@ -1,7 +1,8 @@
 import cogs.utils.configloader as configloader
 discordConfig = configloader.getDiscordValues()
 
-ourServer = None
+serverList = []
+selectedServerId = -1
 readyUsers = []
 teamOne = []
 teamTwo = []

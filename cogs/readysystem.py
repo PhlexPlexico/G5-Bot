@@ -13,11 +13,6 @@ discordConfig = configloader.getDiscordValues()
 
 
 
-team1VoiceChannel = None
-team2VoiceChannel = None
-team1ApiID = -1
-team2ApiID = -1
-matchApiID = -1
 
 class ReadySystem(commands.Cog):
     def __init__(self, bot):
@@ -27,9 +22,6 @@ class ReadySystem(commands.Cog):
     async def ready(self, ctx):
         # we received a message
         # modifying these globals
-        global team1ApiID
-        global team2ApiID
-        global matchApiID
 
         # extract the author and message from context.
         author = ctx.author
@@ -78,11 +70,14 @@ class ReadySystem(commands.Cog):
                                           glbls.firstCaptain.mention + "\nTeam: " + glbls.secondCaptain.mention, color=0x03f0fc)
                     await ctx.send(embed=embed)
                     embed = discord.Embed(description=glbls.firstCaptain.mention + " it is now your pick, pick with `" + discordConfig['prefix'] +
-                                          "pick @user`. Please choose from\n" + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
+                                          "pick @user`. Please choose from\n" + " \n ".join(str(x.mention) for x in glbls.readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
 
-                    team1ApiID = api.createTeam("team_"+glbls.firstCaptain.name, glbls.firstCaptain.id, glbls.firstCaptain.name)
-                    team2ApiID = api.createTeam("team_"+glbls.secondCaptain.name, glbls.secondCaptain.id, glbls.secondCaptain.name)
+                    glbls.team1ApiID = api.createTeam("team_"+glbls.firstCaptain.name, glbls.firstCaptain.id, glbls.firstCaptain.name)
+                    glbls.team2ApiID = api.createTeam("team_"+glbls.secondCaptain.name, glbls.secondCaptain.id, glbls.secondCaptain.name)
+                    # Retrieve servers as well.
+                    glbls.serverList = api.getAvailablePublicServers()
+                    glbls.serverList.extend(api.getListedServers())
                 elif(len(glbls.readyUsers) != 0):
                     embed = discord.Embed(description=author.mention + " **is now ready, we need **" + str(
                         10 - len(glbls.readyUsers)) + " **more**", color=0x03f0fc)
@@ -118,28 +113,30 @@ class ReadySystem(commands.Cog):
 
         return
 
-    @commands.command()
+    @commands.command(aliases=['stop'])
     async def done(self, ctx):
         # make sure they're using the bot setup channel
         if(ctx.message.channel.id != int(discordConfig['setupTextChannelID'])):
             # if they aren't using an appropriate channel, return
             return
-
+        if(glbls.inProgress):
+            api.deleteTeam(glbls.team1ApiID)
+            api.deleteTeam(glbls.team2ApiID)
+            api.deleteVetoes(glbls.matchApiID)
+            api.cancelMatch(glbls.matchApiID)
         glbls.inProgress = False
         glbls.readyUsers = []
         glbls.firstCaptain = None
         glbls.secondCaptain = None
         glbls.teamOne = []
         glbls.teamTwo = []
-        glbls.firstCaptain = None
         glbls.pickNum = 1
         # Don't care if we don't delete or not, just force it.
-        api.deleteTeam(glbls.team1ApiID)
-        api.deleteTeam(glbls.team2ApiID)
         glbls.team1ApiID = -1
         glbls.team2ApiID = -1
         glbls.matchApiID = -1
-        # TODO: Cancel match attempt.
+        glbls.mapList = discordConfig['vetoMapPool'].split(' ')
+        glbls.currentVeto = None
         embed = discord.Embed(
             description="**Current 10man finished, need** 10 **readied players**", color=0xff0000)
         await ctx.send(embed=embed)
@@ -163,14 +160,12 @@ class ReadySystem(commands.Cog):
 
     @commands.command()
     async def pick(self, ctx):
-        global team1VoiceChannel
-        global team2VoiceChannel
         # Get the voice channels.
-        if team1VoiceChannel is None:
-            team1VoiceChannel = ctx.bot.get_channel(
+        if glbls.team1VoiceChannel is None:
+            glbls.team1VoiceChannel = ctx.bot.get_channel(
                 int(discordConfig['team1VoiceChannelID']))
-        if team2VoiceChannel is None:
-            team2VoiceChannel = ctx.bot.get_channel(
+        if glbls.team2VoiceChannel is None:
+            glbls.team2VoiceChannel = ctx.bot.get_channel(
                 int(discordConfig['team2VoiceChannelID']))
         # make sure they're using the bot setup channel
         if(ctx.message.channel.id != int(discordConfig['setupTextChannelID'])):
@@ -198,13 +193,13 @@ class ReadySystem(commands.Cog):
 
                 # add him to team one
                 glbls.teamOne.append(pickedUser)
-                api.addPlayer(team1ApiID, pickedUser.id, pickedUser.name)
+                api.addPlayer(glbls.team1ApiID, pickedUser.id, pickedUser.name)
                 # move him to voice channel for team 1
                 try:
-                    await pickedUser.move_to(team1VoiceChannel)
+                    await pickedUser.move_to(glbls.team1VoiceChannel)
                 except (AttributeError, discord.errors.HTTPException):
                     embed = discord.Embed(description=str(
-                        pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0x03f0fc)
+                        pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0xff0000)
                     await ctx.send(embed=embed)
 
                 # remove him from ready users
@@ -214,55 +209,44 @@ class ReadySystem(commands.Cog):
                 glbls.pickNum += 1
                 # check if we're done picking
                 if(glbls.pickNum == 9):
-                    # Randomly select who vetoes first.
-                    glbls.currentVeto = 'team1' if random.getrandbits(
-                        1) else 'team2'
-                    curLocalVeto = glbls.currentVeto
-                    if (curLocalVeto == "team1"):
-                        firstToVeto = "team_{}".format(glbls.firstCaptain)
-                    else:
-                        firstToVeto = "team_{}".format(glbls.secondCaptain)
-                    embed = discord.Embed(description='''The teams are now made and bot setup is finished.\n
-                    Team {}: '''.format(glbls.firstCaptain.name) + ", ".join(str(x.name) for x in glbls.teamOne) + '''
+                    strServers = "The teams are now made and bot setup is finished."
+                    strServers = strServers + "\nTeam {}: ".format(glbls.firstCaptain.name) + ", ".join(str(x.name) for x in glbls.teamOne)
+                    strServers = strServers + "\nTeam {}: ".format(glbls.secondCaptain.name) + ", ".join(str(x.name) for x in glbls.teamTwo)
+                    strServers = strServers + "\nPlease select from the following servers via `{}select [server_id]`.\n".format(discordConfig['prefix'])
+                    for server in glbls.serverList:
+                        strServers = strServers + "\n**ID:** {}\n**Name:** {}\n **Country:** :flag_{}:\n".format(server['id'], server['display_name'], server['flag'].lower())
                     
-                    Team {}: '''.format(glbls.secondCaptain.name) + ", ".join(str(x.name) for x in glbls.teamTwo) + '''\n
-                    ***Now onto vetoes!***''' + '''
-                    For vetoes, please use `{}veto map_name` or `{}ban map_name` to strike a map. Last map will be the decider.\n\n
-                    **Our current maps are:**\n'''.format(discordConfig['prefix'], discordConfig['prefix']) + discordConfig['vetoMapPool'].replace(' ', '\n')+
-                    "\n**{}** please make the first veto.".format(firstToVeto), color=0x3f0fc)
-                    await ctx.send(embed=embed)
                     try:
-                        await glbls.firstCaptain.move_to(team1VoiceChannel)
+                        await glbls.firstCaptain.move_to(glbls.team1VoiceChannel)
                     except (AttributeError, discord.errors.HTTPException):
                         embed = discord.Embed(description=str(
-                            pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0x03f0fc)
+                            pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0xff0000)
+                        await ctx.send(embed=embed)
                     try:
-                        await glbls.secondCaptain.move_to(team2VoiceChannel)
+                        await glbls.secondCaptain.move_to(glbls.team2VoiceChannel)
                     except (AttributeError, discord.errors.HTTPException):
                         embed = discord.Embed(description=str(
-                            pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0x03f0fc)
+                            pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0xff0000)
+                        await ctx.send(embed=embed)
+
+                    embed = discord.Embed(description=strServers, color=0x3f0fc)
                     await ctx.send(embed=embed)
-                    glbls.inProgress = False
                     glbls.readyUsers = []
                     glbls.teamOne = []
                     glbls.teamTwo = []
 
                     # Create the match without the server.
-                    matchApiID = api.createMatch(team1ApiID, team2ApiID)
-                    # Passing the buck. Use unique IDs instead?
-                    glbls.inProgress = True
-                    glbls.matchApiID = matchApiID
-                    print("Globals match: {}".format(glbls.matchApiID))
+                    glbls.matchApiID = api.createMatch(glbls.team1ApiID, glbls.team2ApiID)
                     glbls.pickNum = 1
                     return
                 # check if we need to pick again or its other captains turn
                 if (glbls.pickNum == 2 or glbls.pickNum == 3 or glbls.pickNum == 5 or glbls.pickNum == 7):
                     embed = discord.Embed(description=glbls.secondCaptain.mention + " it is now your pick, pick with `" +
-                                          discordConfig['prefix'] + "pick @user`. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
+                                          discordConfig['prefix'] + "pick @user`. Please choose from " + " \n ".join(str(x.mention) for x in glbls.readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
                 else:
                     embed = discord.Embed(description=glbls.firstCaptain.mention + " it is now your pick, pick with `" +
-                                          discordConfig['prefix'] + "pick @user`. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
+                                          discordConfig['prefix'] + "pick @user`. Please choose from " + " \n ".join(str(x.mention) for x in glbls.readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
                 return
 
@@ -279,13 +263,13 @@ class ReadySystem(commands.Cog):
 
                 # move him to voice channel for team 2
                 try:
-                    await pickedUser.move_to(team2VoiceChannel)
+                    await pickedUser.move_to(glbls.team2VoiceChannel)
                 except (AttributeError, discord.errors.HTTPException):
                     embed = discord.Embed(description=str(
-                        pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0x03f0fc)
+                        pickedUser.name) + " `is not connected to voice, however we will continue user selection.`", color=0xff0000)
                     await ctx.send(embed=embed)
 
-                api.addPlayer(team2ApiID, pickedUser.id, pickedUser.name)
+                api.addPlayer(glbls.team2ApiID, pickedUser.id, pickedUser.name)
 
                 # remove him from ready users
                 glbls.readyUsers.remove(pickedUser)
@@ -293,11 +277,11 @@ class ReadySystem(commands.Cog):
                 glbls.pickNum += 1
                 if(glbls.pickNum == 1 or glbls.pickNum == 4 or glbls.pickNum == 6 or glbls.pickNum == 8):
                     embed = discord.Embed(description=glbls.firstCaptain.mention + " it is now your pick, pick with `" +
-                                          discordConfig['prefix'] + "pick @user`. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
+                                          discordConfig['prefix'] + "pick @user`. Please choose from " + " \n ".join(str(x.mention) for x in glbls.readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
                 else:
                     embed = discord.Embed(description=glbls.secondCaptain.mention + " it is now your pick, pick with `" +
-                                          discordConfig['prefix'] + "pick @user`. Please choose from " + " \n ".join(str(x.mention) for x in readyUsers), color=0x03f0fc)
+                                          discordConfig['prefix'] + "pick @user`. Please choose from " + " \n ".join(str(x.mention) for x in glbls.readyUsers), color=0x03f0fc)
                     await ctx.send(embed=embed)
                 return
             else:

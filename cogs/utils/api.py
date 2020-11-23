@@ -69,6 +69,9 @@ def addPlayer(teamId, discord_id, name):
                 }
             ]
             retVal = requests.request(method='put', url=apiValues['get5host']+'/teams', json=myJSONTeam)
+            if (retVal.status_code != 200):
+                print(retVal.json())
+                return -1
             return True
         except:
             print('Error!!!')
@@ -105,11 +108,14 @@ def createMatch(team1id, team2id):
                     'title': '[PUG] Map {MAPNUMBER} of {MAXMAPS}',
                     'is_pug': 1,
                     'start_time': datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-                    'ignore_server': True,
+                    'ignore_server': 1,
                     'max_maps': 1
                 }
             ]
             retVal = requests.post(url=apiValues['get5host']+'/matches', json=myJSONMatch)
+            if (retVal.status_code != 200):
+                print(retVal.json())
+                return -1
             return retVal.json()['id']
         except Exception as error:
             print(error)
@@ -123,13 +129,15 @@ def vetoMap(mapname, teamName, matchid, pickBan):
                     'user_id': apiValues['userID'],
                     'user_api': apiValues['userKey'],
                     'match_id': matchid,
-                    'map': mapname,
+                    'map_name': mapname,
                     'team_name': teamName,
                     'pick_or_ban': pickBan
                 }
             ]
             retVal = requests.post(url=apiValues['get5host']+'/vetoes', json=myVetoData)
-            print(retVal.json())
+            if (retVal.status_code != 200):
+                print(retVal.json())
+                return -1
             return retVal.json()['id']
         except Exception as error:
             print(error)
@@ -148,6 +156,73 @@ def deleteVetoes(matchid):
             retVal = requests.request(method='delete', url=apiValues['get5host']+'/vetoes', json=myJSONDelete)
             if (retVal.status_code != 200):
                 raise Exception("We failed to delete the vetoes.")
+            return True
+        except Exception as error:
+            print(error)
+            return False
+
+def cancelMatch(matchid):
+    if (tryAuth):
+        try:
+            myJSONDelete = [
+                {
+                    'user_id': apiValues['userID'],
+                    'user_api': apiValues['userKey']
+                }
+            ]
+            retVal = requests.request(method='get', url=apiValues['get5host']+'/matches/'+str(matchid)+'/cancel', json=myJSONDelete)
+            if (retVal.status_code != 200):
+                raise Exception("We failed to cancel the match.")
+            return True
+        except Exception as error:
+            print(error)
+            return False
+
+def getAvailablePublicServers():
+    if (tryAuth):
+        try:
+            retVal = requests.request(method='get', url=apiValues['get5host']+'/servers/available')
+            if (retVal.status_code != 200):
+                raise Exception("We failed to retrieve servers")
+            return retVal.json()['servers']
+        except Exception as error:
+            print(error)
+            return []
+
+def getListedServers():
+    if (tryAuth):
+        try:
+            myJSONInfo = [
+                {
+                    'user_id': apiValues['userID'],
+                    'user_api': apiValues['userKey']
+                }
+            ]
+            allServers = []
+            for serverId in apiValues['serverIDs'].split(','):
+                retVal = requests.request(method='get', url=apiValues['get5host']+'/servers/'+str(serverId), json=myJSONInfo)
+                if (retVal.status_code == 200 and retVal.json()['server']['in_use'] == 0):
+                    allServers.append(retVal.json()['server'])
+            return allServers
+        except Exception as error:
+            print(error)
+            return []
+
+def assignServer(matchid, serverid):
+    if(tryAuth):
+        try:
+            myJSONMatch = [
+                {
+                    'user_id': apiValues['userID'],
+                    'user_api': apiValues['userKey'],
+                    'server_id': serverid,
+                    'match_id': matchid
+                }
+            ]
+            retVal = requests.request(method='put', url=apiValues['get5host']+'/matches', json=myJSONMatch)
+            if (retVal.status_code != 200):
+                print(retVal.json())
+                return False
             return True
         except Exception as error:
             print(error)
