@@ -114,3 +114,41 @@ def createMatch(team1id, team2id):
         except Exception as error:
             print(error)
             return -1
+
+def vetoMap(mapname, teamName, matchid, pickBan):
+    if(tryAuth):
+        try:
+            myVetoData = [
+                {
+                    'user_id': apiValues['userID'],
+                    'user_api': apiValues['userKey'],
+                    'match_id': matchid,
+                    'map': mapname,
+                    'team_name': teamName,
+                    'pick_or_ban': pickBan
+                }
+            ]
+            retVal = requests.post(url=apiValues['get5host']+'/vetoes', json=myVetoData)
+            print(retVal.json())
+            return retVal.json()['id']
+        except Exception as error:
+            print(error)
+            return -1
+
+def deleteVetoes(matchid):
+    if (tryAuth):
+        try:
+            myJSONDelete = [
+                {
+                    'user_id': apiValues['userID'],
+                    'user_api': apiValues['userKey'],
+                    'match_id': matchid
+                }
+            ]
+            retVal = requests.request(method='delete', url=apiValues['get5host']+'/vetoes', json=myJSONDelete)
+            if (retVal.status_code != 200):
+                raise Exception("We failed to delete the vetoes.")
+            return True
+        except Exception as error:
+            print(error)
+            return False

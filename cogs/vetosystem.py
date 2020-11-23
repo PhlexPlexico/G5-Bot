@@ -1,7 +1,9 @@
 import asyncio
 import discord
+import cogs.utils.api as api
 import cogs.utils.configloader as configloader
 import random
+import cogs.globals as glbls
 from discord.ext import commands
 from discord.ext.commands import bot
 import os
@@ -10,11 +12,8 @@ discordConfig = configloader.getDiscordValues()
 mapList = discordConfig['vetoMapPool'].split(' ')
 # Set in readysystem first, then here.
 currentVeto = None
-match = None
 firstCaptain = None
 secondCaptain = None
-inProgress = False
-
 
 class VetoSystem(commands.Cog):
     def __init__(self, bot):
@@ -38,15 +37,15 @@ class VetoSystem(commands.Cog):
 
         global mapList
         global currentVeto
-        global match
         global firstCaptain
         global secondCaptain
-        global inProgress
+        print("Globals match: {}".format(glbls.matchApiID))
+        print("{} is inProgress, {} is API ID.".format(glbls.inProgress, glbls.matchApiID))
         # make sure they're using the bot setup channel
         if(ctx.message.channel.id != int(discordConfig['setupTextChannelID'])):
             # if they aren't using an appropriate channel, return
             return
-        if(inProgress and len(mapList) != 1):
+        if(glbls.inProgress and len(mapList) != 1):
             # Who's turn is it to veto? Check if it's the captain and if it's their turn.
             # await ctx.send("Our captain name {} current veto {}".format(firstCaptain.name, currentVeto))
             if (__debug__):
@@ -73,11 +72,18 @@ class VetoSystem(commands.Cog):
             try:
                 if(arg.startswith("de_")):
                     mapList.remove(str(arg).lower())
+                    api.vetoMap(str(arg).lower(), 'team_'+ctx.author.name, glbls.matchApiID, 'ban')
                 else:
                     mapList.remove(str("de_"+arg).lower())
+                    api.vetoMap(str("de_"+arg).lower(), 'team_'+ctx.author.name, glbls.matchApiID, 'ban')
             except ValueError:
                 embed = discord.Embed(
                     description="**{} does not exist in the map pool. Please try again.**".format(arg), color=0xff0000)
+                await ctx.send(embed=embed)
+                return
+            except Exception as error:
+                embed = discord.Embed(
+                    description="**{} That's the error lmao**".format(error), color=0xff0000)
                 await ctx.send(embed=embed)
                 return
             # Now that everything is checked and we're successful, let's move on.
@@ -100,15 +106,15 @@ class VetoSystem(commands.Cog):
                 embed = discord.Embed(
                     description="**Map**\n" + mapList[0] + "\nNow that the map has been decided, go to your favourite 10man service and set it up.", color=0x03f0fc)
                 await ctx.send(embed=embed)
-                inProgress = False
+                api.vetoMap(mapList[0], 'Decider', glbls.matchApiID, 'pick')
+                glbls.inProgress = False
                 firstCaptain = None
                 secondCaptain = None
                 mapList = discordConfig['vetoMapPool'].split(' ')
+                glbls.matchApiID = -1
                 currentVeto = None
-                match = None
                 firstCaptain = None
                 secondCaptain = None
-                inProgress = False
             return
 
     @commands.command()
@@ -128,10 +134,8 @@ class VetoSystem(commands.Cog):
     async def stop(self, ctx):
         global mapList
         global currentVeto
-        global match
         global firstCaptain
         global secondCaptain
-        global inProgress
         """ Remove the vetoes and match from the database. """
         # make sure they're using the bot setup channel
         if(ctx.message.channel.id != int(discordConfig['setupTextChannelID'])):
@@ -141,16 +145,14 @@ class VetoSystem(commands.Cog):
             embed = discord.Embed(
                 description="**{}, you are not a captain. Can you don't?**".format(ctx.author.mention), color=0xff0000)
             await ctx.send(embed=embed)
-        elif(inProgress):
-            if(databasePresent):
-                db.delete_vetoes(match.id)
-                db.delete_match(match.id)
-                match = None
+        elif(glbls.inProgress):
+            api.deleteVetoes(glbls.matchApiID)
             mapList = discordConfig['vetoMapPool'].split(' ')
             currentVeto = None
             firstCaptain = None
             secondCaptain = None
-            inProgress = False
+            glbls.inProgress = False
+            glbls.matchApiID = -1
         else:
             embed = discord.Embed(
                 description="Can't stop what hasn't been started.", color=0xff0000)
@@ -166,44 +168,6 @@ class VetoSystem(commands.Cog):
         await ctx.send(embed=embed)
         return
 
-    @commands.command()
-    async def matchadd(self, ctx, arg):
-        # make sure they're using the bot setup channel
-        if(ctx.message.channel.id != int(discordConfig['setupTextChannelID'])):
-            # if they aren't using an appropriate channel, return
-            return
-        if(inProgress and len(mapList) != 1):
-            if (__debug__):
-                if (ctx.author.id != firstCaptain or ctx.author.id != secondCaptain):
-                    embed = discord.Embed(
-                        description="**{}, you are not a captain. Can you don't?**".format(ctx.author.mention), color=0xff0000)
-                    await ctx.send(embed=embed)
-                    return
-            else:
-                embed = discord.Embed(
-                    description="**{} you are not a captain, and cannot add users to your own team. The captains are: {} and {}**".format(ctx.author.mention, firstCaptain, secondCaptain), color=0xff0000)
-                await ctx.send(embed=embed)
-        try:
-            if(ctx.author.id == firstCaptain):
-                team = databaseConfig["team1ScrimID"]
-            else:
-                team = databaseConfig["team2ScrimID"]
-            steam_id = int(arg)
-            if (db.get_total_team_auth(team) > 5):
-                embed = discord.Embed(
-                    description="We already have 5 memebers in your team. Don't do that you cheater.", color=0xff0000)
-                await ctx.send(embed=embed)
-            else:
-                # Successful steam ID to add into the game.
-                db.append_auths_in_team(steam_id, team)
-                embed = discord.Embed(
-                    description="Player has been successfully added to team.", color=0xff0000)
-                await ctx.send(embed=embed)
-        except ValueError:
-            embed = discord.Embed(
-                    description="We can't insert a non-integer value into the database. Please don't.", color=0xff0000)
-            await ctx.send(embed=embed)
-        return
 
 def setup(bot):
     bot.add_cog(VetoSystem(bot))
