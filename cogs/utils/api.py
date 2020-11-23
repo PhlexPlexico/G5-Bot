@@ -109,7 +109,8 @@ def createMatch(team1id, team2id):
                     'is_pug': 1,
                     'start_time': datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
                     'ignore_server': 1,
-                    'max_maps': 1
+                    'max_maps': 1,
+                    'veto_first': 'team1'
                 }
             ]
             retVal = requests.post(url=apiValues['get5host']+'/matches', json=myJSONMatch)
