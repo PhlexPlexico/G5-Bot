@@ -1,12 +1,12 @@
 import asyncio
-import discord
 import cogs.utils.configloader as configloader
-import random
-import sqlite3
+import discord
+from cogs.globals import discordConfig
 from discord.ext import commands
 from discord.ext.commands import bot
 import os
-
+import random
+import sqlite3
 
 class LinkSystem(commands.Cog):
     def __init__(self, bot):
@@ -29,6 +29,8 @@ class LinkSystem(commands.Cog):
                 newVal = (ctx.author.id, arg)
                 db.cursor().execute("INSERT INTO steam_auth (discord_id, steam_id) VALUES (?,?);", newVal)
                 db.commit()
+                tmpRole = ctx.guild.get_role(int(discordConfig['mentionableID']))
+                await ctx.author.add_roles(tmpRole)
                 await ctx.send("Successfully linked accounts!")
         except sqlite3.Error as error:
             await ctx.send("Error in adding to our sqlite3 db.", error)
@@ -44,6 +46,8 @@ class LinkSystem(commands.Cog):
             else:
                 db.cursor().execute("DELETE FROM steam_auth WHERE discord_id = ?;", [ctx.author.id])
                 db.commit()
+                tmpRole = ctx.guild.get_role(int(discordConfig['mentionableID']))
+                await ctx.author.remove_roles(tmpRole)
                 await ctx.send("Successfully unlinked accounts!")
         except sqlite3.Error as error:
             await ctx.send("Error in adding to our sqlite3 db.", error)
