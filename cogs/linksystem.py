@@ -58,10 +58,10 @@ class LinkSystem(commands.Cog):
     async def helpsetup(self, ctx):
         try:
             apiUrl = configloader.getAPIValues()
-            helpText = """Hey there! This is PugBot. PugBot is meant to be used privately to setup 10mans within a Discord, and link all your stats to [G5API]("""+apiUrl['get5host']+""").
+            helpText = """Hey there! This is PugBot. PugBot is meant to be used privately to setup 10mans within a Discord, and link all your stats to G5API - """+apiUrl['get5host']+""".
             
             In order to get started, please link your account by using the !link command, followed by your steam URL.
-            !link https://steamcommunity.com/id/phlexplexico
+            `"""+discordConfig['prefix']+"""link https://steamcommunity.com/id/phlexplexico`
             as an example.
             
             If you wish to unlink and not be mentioned and join 10mans, just call """+discordConfig['prefix']+"""unlink.
