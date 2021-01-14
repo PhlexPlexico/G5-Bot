@@ -78,9 +78,7 @@ class LinkSystem(commands.Cog):
             After that, there will be a server selection, brought to you by whoever has set me up! Once the server gets selected, you'll be off to the races to start a match!"""
             await ctx.send(helpText)
         except sqlite3.Error as error:
-            await ctx.send("Error in adding to our sqlite3 db.", error)
-        finally:
-            db.close()
+            await ctx.send("I can't help you :)")
 
 def setup(bot):
     bot.add_cog(LinkSystem(bot))
