@@ -54,6 +54,33 @@ class LinkSystem(commands.Cog):
         finally:
             db.close()
 
+    @commands.command(aliases=['help'])
+    async def unlinkSteam(self, ctx):
+        try:
+            apiUrl = configloader.getAPIValues()
+            helpText = """Hey there! This is PugBot. PugBot is meant to be used privately to setup 10mans within a Discord, and link all your stats to [G5API]("""+apiUrl['get5host']+""").
+            
+            In order to get started, please link your account by using the !link command, followed by your steam URL.
+            !link https://steamcommunity.com/id/phlexplexico
+            as an example.
+            
+            If you wish to unlink and not be mentioned and join 10mans, just call """+discordConfig['prefix']+"""unlink.
+            
+            To ready for a match, call !ready. Make sure you're in a voice channel so I can move you to the proper team channel when captains pick their teammates.
+            As a captain, you can do the following to pick a user:
+            `"""+discordConfig['prefix']+"""pick @user`
+            to choose a user. Once captains have chosen all their teammates, I will randomly select a team to start the veto process.
+            
+            In order to veto, all you have to call is
+            `"""+discordConfig['prefix']+"""ban [map_name]`
+            Where [map_name] is in the list.
+            
+            After that, there will be a server selection, brought to you by whoever has set me up! Once the server gets selected, you'll be off to the races to start a match!"""
+            await ctx.send(helpText)
+        except sqlite3.Error as error:
+            await ctx.send("Error in adding to our sqlite3 db.", error)
+        finally:
+            db.close()
 
 def setup(bot):
     bot.add_cog(LinkSystem(bot))
