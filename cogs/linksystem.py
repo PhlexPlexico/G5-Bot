@@ -54,8 +54,8 @@ class LinkSystem(commands.Cog):
         finally:
             db.close()
 
-    @commands.command(aliases=['help'])
-    async def unlinkSteam(self, ctx):
+    @commands.command(aliases=['halp'])
+    async def help(self, ctx):
         try:
             apiUrl = configloader.getAPIValues()
             helpText = """Hey there! This is PugBot. PugBot is meant to be used privately to setup 10mans within a Discord, and link all your stats to [G5API]("""+apiUrl['get5host']+""").
