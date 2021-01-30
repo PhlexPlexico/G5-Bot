@@ -38,7 +38,7 @@ class VetoSystem(commands.Cog):
             # Who's turn is it to veto? Check if it's the captain and if it's their turn.
             # await ctx.send("Our captain name {} current veto {}".format(firstCaptain.name, currentVeto))
             if (__debug__):
-                if (ctx.author.id != glbls.firstCaptain.id or ctx.author.id != glbls.secondCaptain.id):
+                if (ctx.author.id != glbls.firstCaptain.id and ctx.author.id != glbls.secondCaptain.id):
                     embed = discord.Embed(
                         description="**{}, you are not a captain. Can you don't?**".format(ctx.author.mention), color=0xff0000)
                     await ctx.send(embed=embed)
