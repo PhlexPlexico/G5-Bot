@@ -53,7 +53,7 @@ class VetoSystem(commands.Cog):
                         description="**{} It is not your turn to veto. C'mon dude.**".format(ctx.author.mention), color=0xff0000)
                     await ctx.send(embed=embed)
                     return
-                elif(glbls.selectedServerId < 0):
+                elif(int(glbls.selectedServerId) < 0):
                     embed = discord.Embed(
                         description="**The server has not been selected yet. Please select the server before continuing.**", color=0xff0000)
                     await ctx.send(embed=embed)
