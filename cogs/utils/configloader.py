@@ -6,8 +6,8 @@ config.read('settings.ini')
 def __init__(self, config):
     self.config = config
 
-def getDatabaseValues():
-    return config['DATABASE']
+def getAPIValues():
+    return config['API']
 
 def getDiscordValues():
     return config['DISCORD']

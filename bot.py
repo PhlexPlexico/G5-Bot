@@ -18,12 +18,12 @@
 #
 import cogs.utils.configloader as config
 import discord
+import cogs.utils.api
 from discord.ext import commands
 
-databaseValues = config.getDatabaseValues()
 discordValues = config.getDiscordValues()
 
-initial_extensions = ['cogs.readysystem', 'cogs.vetosystem']
+initial_extensions = ['cogs.readysystem', 'cogs.vetosystem', 'cogs.linksystem', 'cogs.serversystem']
 
 bot = commands.Bot(
     command_prefix=discordValues['prefix'], description=discordValues['description'])
@@ -36,7 +36,6 @@ if __name__ == '__main__':
 
 @bot.event
 async def on_ready():
-
     print('------')
     print('Logged in as {} with id {}'.format(bot.user.name, bot.user.id))
     print('VC1 Name is {}\nVC2 Name is {}'.format(

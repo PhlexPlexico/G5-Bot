@@ -2,3 +2,4 @@ venv/
 .vscode
 __pycache__/
 settings.ini
+steam_auths.db
