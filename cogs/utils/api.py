@@ -40,7 +40,8 @@ def createTeam(teamName, captain_id, captain_name):
                             'name': captain_name,
                             'captain': 1
                         }
-                    }
+                    },
+                    'flag': 'CA'
                 }
             ]
             retVal = requests.post(url=apiValues['get5host']+'/teams', json=myJSONTeam)
