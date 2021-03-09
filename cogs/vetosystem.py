@@ -103,7 +103,7 @@ class VetoSystem(commands.Cog):
                 await ctx.send(embed=embed)
                 api.vetoMap(glbls.mapList[0], 'Decider', glbls.matchApiID, 'pick')
                 api.assignServer(glbls.matchApiID, glbls.selectedServerId)
-                strEmbed = "Match is now configured! Please navigate to {}/match/{} to connect sign in and connect to the match!".format(apiValues['get5host'][:4], glbls.matchApiID)
+                strEmbed = "Match is now configured! Please navigate to {}/match/{} to connect sign in and connect to the match!".format(apiValues['get5host'][:-4], glbls.matchApiID)
                 embed = discord.Embed(description=strEmbed)
                 await ctx.send(embed=embed)
                 glbls.inProgress = False
