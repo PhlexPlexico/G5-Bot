@@ -9,6 +9,7 @@ from discord.ext import commands
 from discord.ext.commands import bot
 import os
 discordConfig = configloader.getDiscordValues()
+apiValues = configloader.getAPIValues()
 
 class VetoSystem(commands.Cog):
     def __init__(self, bot):
@@ -102,12 +103,7 @@ class VetoSystem(commands.Cog):
                 await ctx.send(embed=embed)
                 api.vetoMap(glbls.mapList[0], 'Decider', glbls.matchApiID, 'pick')
                 api.assignServer(glbls.matchApiID, glbls.selectedServerId)
-                assignedServer = {}
-                for server in glbls.serverList:
-                    if(int(server['id']) == int(glbls.selectedServerId)):
-                        assignedServer = server
-                        break
-                strEmbed = "Match is now configured! Open CS:GO and enter in the following command: `connect {}:{}`".format(assignedServer['ip_string'], assignedServer['port'])
+                strEmbed = "Match is now configured! Please navigate to {}/match/{} to connect sign in and connect to the match!".format(apiValues['get5host'][:4], glbls.matchApiID)
                 embed = discord.Embed(description=strEmbed)
                 await ctx.send(embed=embed)
                 glbls.inProgress = False
